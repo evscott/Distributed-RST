@@ -38,6 +38,8 @@ func (req AddToClusterMessage) String() string {
 
 /* The entry point for our System */
 func main(){
+
+
 	/* Parse the provided parameters on command line */
 	makeMasterOnError := flag.Bool("makeMasterOnError", false, "make this node master if unable to connect to the cluster ip provided.")
 	clusterip := flag.String("clusterip", "127.0.0.1:8001", "ip address of any node to connnect")
