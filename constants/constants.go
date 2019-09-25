@@ -1,13 +1,14 @@
 package constants
 
 const (
-	stdin string = "<< %v: "
-	stdout string = ">> %v %v\n"
+	StdIn  string = "<< %v: "
+	StdOut string = ">> %v %v\n"
 )
 
 type Intent string
 
 const (
-	IntentPing Intent = "ping"
+	IntentPing         Intent = "ping"
+	IntentSendPosition Intent = "send position"
 
 )
