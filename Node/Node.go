@@ -3,8 +3,8 @@ package Node
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/evscott/DistroA1/Payload"
 	"github.com/evscott/DistroA1/constants"
-	"github.com/evscott/DistroA1/models/Message"
 	"net"
 	"time"
 )
@@ -74,7 +74,7 @@ func (i *Info) SendPosition(dest string) error {
 		}
 	}
 
-	PositionMsg := Message.Data{ Source: i.Port, Dest: dest, Intent: constants.IntentSendPosition, Message: i.Neighbours}
+	PositionMsg := Payload.Payload{ Source: i.Port, Dest: dest, Intent: constants.IntentSendPosition, Message: i.Neighbours}
 
 	if err := json.NewEncoder(connOut).Encode(&PositionMsg); err != nil {
 		fmt.Printf("Couldn't enncode message %v \n", PositionMsg)
@@ -97,7 +97,7 @@ func (i *Info) SendPing(dest string) bool {
 		}
 	}
 
-	Ping := Message.Data{ Source:i.Port, Dest: dest, Intent: constants.IntentPing }
+	Ping := Payload.Payload{ Source: i.Port, Dest: dest, Intent: constants.IntentPing }
 	if err := json.NewEncoder(connOut).Encode(&Ping); err != nil {
 		fmt.Printf("Couldn't enncode message %v \n", Ping)
 		return false
@@ -123,7 +123,7 @@ func (i *Info) ListenOnPort(){
 			}
 		}
 
-		var reqMsg Message.Data
+		var reqMsg Payload.Payload
 		if err := json.NewDecoder(connIn).Decode(&reqMsg); err != nil {
 			fmt.Printf("Error decoding %v\n", err)
 		}
