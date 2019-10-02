@@ -1,19 +1,19 @@
 package main
 
-/* Al useful imports */
 import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/evscott/DistroA1/Node"
-	"github.com/evscott/DistroA1/constants"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/evscott/DistroA1/Node"
 )
 
-func main(){
+/* TODO */
+func main() {
 	port := flag.String("port", "", "The port to run this node on")
 	flag.Parse()
 	neighbors := flag.Args()
@@ -28,41 +28,54 @@ func main(){
 	node := Node.Create(ip, *port, neighbors)
 
 	go node.ListenOnPort()
-	time.Sleep(time.Second/2)
-	exposeCLI(node)
+	time.Sleep(time.Second / 10)
+	runCLI(node)
 }
 
-func exposeCLI(node *Node.Info) {
+/* TODO */
+func runCLI(node *Node.Info) {
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Printf(constants.StdIn, "enter cmd")
+		fmt.Printf(">> enter cmd: ")
 		if rawUserInput, err := reader.ReadString('\n'); err == nil {
 			userInput := strings.Split(rawUserInput, "\n")[0]
 
 			switch userInput {
-			case "start":
-				node.Start()
+			case "startCG":
+				node.StartCG()
+			case "startRST":
+				node.StartRST()
 			case "ping":
-				fmt.Printf(constants.StdIn, "enter port")
+				fmt.Printf(">>>> enter port: ")
 				if rawUserInput, err := reader.ReadString('\n'); err == nil {
 					userInput = strings.Split(rawUserInput, "\n")[0]
 					node.SendPing(userInput)
 				}
 			case "show neighbors":
-				fmt.Printf(constants.StdOut, node.Neighbours, "")
+				fmt.Printf(">> [%v]", node.Neighbours)
 			case "show proc_known":
-				fmt.Printf(constants.StdOut, node.ProcKnown, "")
-			case "show channels_known":
-				fmt.Printf(">>")
-				for _, p := range node.ChannelsKnown {
-					fmt.Printf(" (%v, %v)", p.I, p.J)
+				for key, _ := range node.ProcKnown {
+					fmt.Printf(">>{%s}\n", key)
 				}
-				fmt.Printf("\n")
+			case "show channels_known":
+				for key, _ := range node.ChannelsKnown {
+					fmt.Printf(">>(%s, %s)\n", key.I, key.J)
+				}
+			case "show inbox":
+				for key, _ := range node.MessageInbox {
+					fmt.Printf(">>[%v]\n", key)
+				}
+			case "show children":
+				for key, _ := range node.Children {
+					fmt.Printf(">>[%v]\n", key)
+				}
+			case "show parent":
+				fmt.Printf(">> %s", node.Parent)
 			case "exit":
-				fmt.Printf(constants.StdOut, "shutting down node", node.Port)
+				fmt.Printf(">> shutting down node %v\n", node.Port)
 				os.Exit(0)
 			default:
-				fmt.Printf(constants.StdOut, "no command found for", userInput)
+				fmt.Printf(">> no command found for %v\n", userInput)
 			}
 		}
 	}
