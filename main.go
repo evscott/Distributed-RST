@@ -1,23 +1,17 @@
 package main
 
 import (
-	"bufio"
-	"flag"
 	"fmt"
 	"net"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/evscott/DistroA1/Node"
 )
 
-/* TODO */
+// main is the entry point for this distributed system
+//
 func main() {
-	port := flag.String("port", "", "The port to run this node on")
-	flag.Parse()
-	neighbors := flag.Args()
-
 	ipAddr, err := net.InterfaceAddrs()
 	if err != nil {
 		fmt.Print(err)
@@ -25,58 +19,38 @@ func main() {
 	}
 	ip := strings.Split(ipAddr[0].String(), "/")[0]
 
-	node := Node.Create(ip, *port, neighbors)
-
-	go node.ListenOnPort()
-	time.Sleep(time.Second / 10)
-	runCLI(node)
+	runExample(ip)
 }
 
-/* TODO */
-func runCLI(node *Node.Info) {
-	reader := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Printf(">> enter cmd: ")
-		if rawUserInput, err := reader.ReadString('\n'); err == nil {
-			userInput := strings.Split(rawUserInput, "\n")[0]
+// runExample creates an exemplary distributed rooted spanning tree from a generic communication graph
+func runExample(ip string) {
+	n1 := Node.Create(ip, "8000", []string{"8001", "8006", "8007"})
+	go n1.ListenOnPort()
 
-			switch userInput {
-			case "startCG":
-				node.StartCG()
-			case "startRST":
-				node.StartRST()
-			case "ping":
-				fmt.Printf(">>>> enter port: ")
-				if rawUserInput, err := reader.ReadString('\n'); err == nil {
-					userInput = strings.Split(rawUserInput, "\n")[0]
-					node.SendPing(userInput)
-				}
-			case "show neighbors":
-				fmt.Printf(">> [%v]", node.Neighbours)
-			case "show proc_known":
-				for key, _ := range node.ProcKnown {
-					fmt.Printf(">>{%s}\n", key)
-				}
-			case "show channels_known":
-				for key, _ := range node.ChannelsKnown {
-					fmt.Printf(">>(%s, %s)\n", key.I, key.J)
-				}
-			case "show inbox":
-				for key, _ := range node.MessageInbox {
-					fmt.Printf(">>[%v]\n", key)
-				}
-			case "show children":
-				for key, _ := range node.Children {
-					fmt.Printf(">>[%v]\n", key)
-				}
-			case "show parent":
-				fmt.Printf(">> %s", node.Parent)
-			case "exit":
-				fmt.Printf(">> shutting down node %v\n", node.Port)
-				os.Exit(0)
-			default:
-				fmt.Printf(">> no command found for %v\n", userInput)
-			}
-		}
-	}
+	n2 := Node.Create(ip, "8001", []string{"8000", "8002", "8007"})
+	go n2.ListenOnPort()
+
+	n3 := Node.Create(ip, "8002", []string{"8001", "8003"})
+	go n3.ListenOnPort()
+
+	n4 := Node.Create(ip, "8003", []string{"8002", "8007", "8004", "8005"})
+	go n4.ListenOnPort()
+
+	n5 := Node.Create(ip, "8004", []string{"8005", "8003"})
+	go n5.ListenOnPort()
+
+	n6 := Node.Create(ip, "8005", []string{"8003", "8004", "8006"})
+	go n6.ListenOnPort()
+
+	n7 := Node.Create(ip, "8006", []string{"8000", "8007", "8003", "8005"})
+	go n7.ListenOnPort()
+
+	n8 := Node.Create(ip, "8007", []string{"8007", "8000", "8001", "8003", "8006"})
+	go n8.ListenOnPort()
+
+	time.Sleep(time.Second / 10)
+
+	n1.StartRST()
+
+	time.Sleep(time.Second)
 }
