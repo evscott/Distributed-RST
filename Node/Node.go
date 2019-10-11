@@ -50,8 +50,8 @@ func Create(ip, port string, neighbors []string) *Info {
 	return &newNode
 }
 
-// StartRST is the external command that triggers a node to create a distributed rooted spanning tree with it as the root
-func (i *Info) StartRST() {
+// Start is the external command that triggers a node to create a distributed rooted spanning tree with it as the root
+func (i *Info) Start() {
 	i.Parent = i.Port
 	i.Children = make(map[string]bool)
 	i.ExpectedMsg = len(i.Neighbours)
@@ -63,16 +63,14 @@ func (i *Info) StartRST() {
 			Data:   "Some starting message",
 		}
 
-		if err := i.SendGo(msgOut, neighbor); err != nil {
+		if err := i.SendMsg(msgOut, neighbor); err != nil {
 			fmt.Println(err)
 		}
 	}
 }
 
-/**** Receive Handlers ****/
-
-// ReceiveGo handles the event of a node receiving a "Go" messages on a distributed system
-func (i *Info) ReceiveGo(msgIn Models.Message) {
+// Go handles the event of a node receiving a "Go" messages on a distributed system
+func (i *Info) Go(msgIn Models.Message) {
 	if i.Parent == "" {
 		i.Parent = msgIn.Source
 		i.Children = make(map[string]bool)
@@ -84,7 +82,7 @@ func (i *Info) ReceiveGo(msgIn Models.Message) {
 				Intent: constants.IntentSendBack,
 				ValSet: i.ValSet,
 			}
-			if err := i.SendBack(msgOut, i.Parent); err != nil {
+			if err := i.SendMsg(msgOut, i.Parent); err != nil { // send back
 				fmt.Println(err)
 			}
 		} else {
@@ -95,7 +93,7 @@ func (i *Info) ReceiveGo(msgIn Models.Message) {
 			}
 			for _, neighbor := range i.Neighbours {
 				if neighbor != msgIn.Source {
-					if err := i.SendGo(msgOut, neighbor); err != nil {
+					if err := i.SendMsg(msgOut, neighbor); err != nil {
 						fmt.Println(err)
 					}
 				}
@@ -107,14 +105,14 @@ func (i *Info) ReceiveGo(msgIn Models.Message) {
 			Intent: constants.IntentSendBack,
 			ValSet: nil,
 		}
-		if err := i.SendBack(msgOut, msgIn.Source); err != nil {
+		if err := i.SendMsg(msgOut, msgIn.Source); err != nil { // send back
 			fmt.Println(err)
 		}
 	}
 }
 
-// ReceiveBack handles the event of a node receiving a "Back" messages on a distributed system
-func (i *Info) ReceiveBack(msgIn Models.Message) {
+// Back handles the event of a node receiving a "Back" messages on a distributed system
+func (i *Info) Back(msgIn Models.Message) {
 	i.ExpectedMsg--
 	if msgIn.ValSet != nil {
 		i.Children[msgIn.Source] = true
@@ -130,22 +128,17 @@ func (i *Info) ReceiveBack(msgIn Models.Message) {
 				Intent: constants.IntentSendBack,
 				ValSet: i.ValSet,
 			}
-			if err := i.SendBack(msgOut, i.Parent); err != nil {
+			if err := i.SendMsg(msgOut, i.Parent); err != nil { // send back
 				fmt.Println(err)
 			}
 		} else {
-			fmt.Printf("root: %v received ValSets received:", i.Port)
-			for _, vs := range i.ValSet {
-				fmt.Printf("%v\n", vs)
-			}
+			fmt.Printf("Root [%s] has received all ValSets\n", i.Port)
 		}
 	}
 }
 
-/**** Send Handlers ****/
-
 // SendPosition handles the event of a node sending a "Go" message to another node on a distributed system
-func (i *Info) SendGo(msg Models.Message, dest string) error {
+func (i *Info) SendMsg(msg Models.Message, dest string) error {
 	connOut, err := net.DialTimeout("tcp", i.IP+":"+dest, time.Duration(10)*time.Second)
 	if err != nil {
 		if _, ok := err.(net.Error); ok {
@@ -160,26 +153,6 @@ func (i *Info) SendGo(msg Models.Message, dest string) error {
 	}
 	return nil
 }
-
-// SendPosition handles the event of a node sending a "Back" message to another node on a distributed system
-func (i *Info) SendBack(msgIn Models.Message, dest string) error {
-	connOut, err := net.DialTimeout("tcp", i.IP+":"+dest, time.Duration(10)*time.Second)
-	if err != nil {
-		if _, ok := err.(net.Error); ok {
-			fmt.Printf("Couldn't send back to %s:%s \n", i.IP, dest)
-			return err
-		}
-	}
-
-	if err := json.NewEncoder(connOut).Encode(&msgIn); err != nil {
-		fmt.Printf("Couldn't enncode message %v \n", msgIn)
-		return err
-	}
-	return nil
-
-}
-
-/**** Node Communication Radar ****/
 
 // ListenOnPort is intended to be a nodes satellite for receiving messages on a distributed system
 func (i *Info) ListenOnPort() {
@@ -206,9 +179,9 @@ func (i *Info) ListenOnPort() {
 
 		switch msg.Intent {
 		case constants.IntentSendGo:
-			i.ReceiveGo(msg)
+			i.Go(msg)
 		case constants.IntentSendBack:
-			i.ReceiveBack(msg)
+			i.Back(msg)
 		}
 	}
 }

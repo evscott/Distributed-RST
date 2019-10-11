@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 )
 
 // main is the entry point for this distributed system
-//
 func main() {
 	ipAddr, err := net.InterfaceAddrs()
 	if err != nil {
@@ -50,7 +50,41 @@ func runExample(ip string) {
 
 	time.Sleep(time.Second / 10)
 
-	n1.StartRST()
+	n1.Start()
 
 	time.Sleep(time.Second)
+
+	displayAdjMatrix(n1, n2, n3, n4, n5, n6, n7, n8)
+}
+
+func displayAdjMatrix(nodeArr ...*Node.Info) {
+	size := len(nodeArr)
+
+	adjMatrix := make([][]uint8, size)
+	for i := range adjMatrix {
+		adjMatrix[i] = make([]uint8, size)
+	}
+
+	for _, node := range nodeArr {
+		if port, err := strconv.Atoi(node.Port); err == nil {
+			p := port % 1000
+
+			for child, _ := range node.Children {
+				if c, err := strconv.Atoi(child); err == nil {
+					c := c % 1000
+
+					adjMatrix[c][p] = 1
+				}
+			}
+		}
+	}
+
+	// set a for loop
+	for i := 0;  i < size; i++ {
+		fmt.Printf("[")
+		for j := 0; j < size; j++ {
+			fmt.Printf("%d,", adjMatrix[i][j])
+		}
+		fmt.Printf("]\n")
+	}
 }
