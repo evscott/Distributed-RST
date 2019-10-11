@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evscott/DistroA1/Node"
+	"github.com/evscott/Distributed-RST/Node"
 )
 
 // main is the entry point for this distributed system
@@ -50,11 +50,55 @@ func runExample(ip string) {
 
 	time.Sleep(time.Second / 10)
 
+	fmt.Println()
+
 	n1.Start()
 
 	time.Sleep(time.Second)
 
+	fmt.Println()
+
+	displayNeighbors(n1, n2, n3, n4, n5, n6, n7, n8)
+
+	fmt.Println()
+
+	displayChildren(n1, n2, n3, n4, n5, n6, n7, n8)
+
+	fmt.Println()
+
 	displayAdjMatrix(n1, n2, n3, n4, n5, n6, n7, n8)
+}
+
+func displayNeighbors(nodeArr ...*Node.Info) {
+	for _, node := range nodeArr {
+		if port, err := strconv.Atoi(node.Port); err == nil {
+			p := port % 1000
+			fmt.Printf("Node %d: neighbors: {", p)
+			for _, neighbour := range node.Neighbours {
+				if c, err := strconv.Atoi(neighbour); err == nil {
+					c := c % 1000
+					fmt.Printf("%d,", c)
+				}
+			}
+			fmt.Printf("}\n")
+		}
+	}
+}
+
+func displayChildren(nodeArr ...*Node.Info) {
+	for _, node := range nodeArr {
+		if port, err := strconv.Atoi(node.Port); err == nil {
+			p := port % 1000
+			fmt.Printf("Node %d: children: {", p)
+			for child, _ := range node.Children {
+				if c, err := strconv.Atoi(child); err == nil {
+					c := c % 1000
+					fmt.Printf("%d,", c)
+				}
+			}
+			fmt.Printf("}\n")
+		}
+	}
 }
 
 func displayAdjMatrix(nodeArr ...*Node.Info) {

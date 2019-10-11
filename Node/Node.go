@@ -3,8 +3,8 @@ package Node
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/evscott/DistroA1/Models"
-	"github.com/evscott/DistroA1/constants"
+	"github.com/evscott/Distributed-RST/Models"
+	"github.com/evscott/Distributed-RST/constants"
 	"net"
 	"time"
 )

@@ -1,7 +1,7 @@
 package Models
 
 import (
-	"github.com/evscott/DistroA1/constants"
+	"github.com/evscott/Distributed-RST/constants"
 )
 
 // Pair is a generic struct representing a pair of two Node ID's, I and J
