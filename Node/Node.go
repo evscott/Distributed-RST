@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Info contains all critical information that pertains to a nodes current state
+// Info represents the knowledge of a node participating in Raynal's definition of rooted spanning tree.
 type Info struct {
 	IP            string               `json:"IP"`
 	Part          bool                 `json:"part"`
@@ -24,12 +24,14 @@ type Info struct {
 	ValSet        []Models.ValPair     `json:"valSet"`
 }
 
-// String is used to format a nodes key information; i.e. it's IP and Port
+// Just for pretty printing Node info
 func (i Info) String() string {
 	return "NodeInfo:{IP:" + i.IP + ", Port:" + i.Port + " }"
 }
 
-// Create is a constructor that is used to instantiate a new node with an IP, Port, and set of neighbors
+// Create is used a constructor that instantiates a new node using it's initial knowledge.
+//
+// A node must be created with initial knowledge of it's network IP, ID, and the IDs of it's neighbors.
 func Create(ip, port string, neighbors []string) *Info {
 	newNode := Info{
 		IP:            ip,
@@ -50,7 +52,8 @@ func Create(ip, port string, neighbors []string) *Info {
 	return &newNode
 }
 
-// Start is the external command that triggers a node to create a distributed rooted spanning tree with it as the root
+// Start is an external command that triggers a node to contact its neighbors and begin the
+// processes of creating a rooted spanning tree.
 func (i *Info) Start() {
 	i.Parent = i.Port
 	i.Children = make(map[string]bool)
@@ -69,7 +72,8 @@ func (i *Info) Start() {
 	}
 }
 
-// Go handles the event of a node receiving a "Go" messages on a distributed system
+// Go handles the event of a node receiving a "Go" messages with it's communication graph
+// as part of creating a rooted spanning tree.
 func (i *Info) Go(msgIn Models.Message) {
 	if i.Parent == "" {
 		i.Parent = msgIn.Source
@@ -93,7 +97,7 @@ func (i *Info) Go(msgIn Models.Message) {
 			}
 			for _, neighbor := range i.Neighbours {
 				if neighbor != msgIn.Source {
-					if err := i.SendMsg(msgOut, neighbor); err != nil {
+					if err := i.SendMsg(msgOut, neighbor); err != nil { // Send go
 						fmt.Println(err)
 					}
 				}
@@ -105,13 +109,14 @@ func (i *Info) Go(msgIn Models.Message) {
 			Intent: constants.IntentSendBack,
 			ValSet: nil,
 		}
-		if err := i.SendMsg(msgOut, msgIn.Source); err != nil { // send back
+		if err := i.SendMsg(msgOut, msgIn.Source); err != nil { // Send back
 			fmt.Println(err)
 		}
 	}
 }
 
-// Back handles the event of a node receiving a "Back" messages on a distributed system
+// Back handles the event of a node receiving a `Back` messages with it's communication graph
+// as part of creating a rooted spanning tree.
 func (i *Info) Back(msgIn Models.Message) {
 	i.ExpectedMsg--
 	if msgIn.ValSet != nil {
@@ -128,7 +133,7 @@ func (i *Info) Back(msgIn Models.Message) {
 				Intent: constants.IntentSendBack,
 				ValSet: i.ValSet,
 			}
-			if err := i.SendMsg(msgOut, i.Parent); err != nil { // send back
+			if err := i.SendMsg(msgOut, i.Parent); err != nil { // Send back
 				fmt.Println(err)
 			}
 		} else {
@@ -137,7 +142,7 @@ func (i *Info) Back(msgIn Models.Message) {
 	}
 }
 
-// SendPosition handles the event of a node sending a "Go" message to another node on a distributed system
+// SendPosition handles the event of a node sending a "Go" message to another node on a distributed system.
 func (i *Info) SendMsg(msg Models.Message, dest string) error {
 	connOut, err := net.DialTimeout("tcp", i.IP+":"+dest, time.Duration(10)*time.Second)
 	if err != nil {
@@ -154,7 +159,10 @@ func (i *Info) SendMsg(msg Models.Message, dest string) error {
 	return nil
 }
 
-// ListenOnPort is intended to be a nodes satellite for receiving messages on a distributed system
+// ListenOnPort is the communication satellite for a node that listens for incoming messages.
+// Incoming messages are marshalled into a `Message` struct, and are directed to a handler
+// depending on the messages `Intent`.
+// Incoming messages that cannot be marshalled into a `Message` may cause erroneous behaviour.
 func (i *Info) ListenOnPort() {
 	ln, err := net.Listen("tcp", fmt.Sprint(":"+i.Port))
 	if err != nil {
