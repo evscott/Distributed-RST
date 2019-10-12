@@ -2,7 +2,7 @@
 
 An implementation of a distributed rooted spanning tree following the definition put forward by Michel Raynal in _Distributed Algorithm's for Message Passing Systems._
 
-### Example graph
+### Example graph:
 
 - Dotted edges represent channels not belonging to the spanning tree.
 - Filled edges represent channels with arrows oriented towards the root of the spanning tree.
