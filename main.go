@@ -126,6 +126,13 @@ func printMatrix(size int, adjMatrix [][]uint8) {
 }
 
 // runExample creates a rooted spanning tree from an arbitrary communication graph and display it.
+//
+// This example borrows the example put forward by Raynal in `Distributed Algorithm's for Message Passing Systems, but
+// substitutes letters for numbers in the identification of nodes.
+// `a` = `8000`
+// `b` = `8001`
+// `c` = `8002`
+// ... etc
 func runExample(ip string) {
 	n1 := Node.Create(ip, "8000", []string{"8001", "8006", "8007"})
 	n2 := Node.Create(ip, "8001", []string{"8000", "8002", "8007"})
